@@ -14,9 +14,9 @@ const options = { next: { revalidate: 30 } };
 export default async function PostPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>; // Awaitable params object
 }) {
-  const { slug } = await params; // Await the params object
+  const { slug } =  await params; // Await the params object
 
   const post = await client.fetch(POST_QUERY, { slug }, options);
 
