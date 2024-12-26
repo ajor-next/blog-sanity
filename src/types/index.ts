@@ -60,7 +60,7 @@ interface MarkDef {
   _type: string;
 }
 
-interface Category extends Base {
+export interface Category extends Base {
   description: string;
   slug : string;
   title: string;

@@ -1,55 +1,115 @@
-import { PortableText } from "next-sanity";
+import { groq } from "next-sanity";
 import Link from "next/link";
 import Image from "next/image";
 import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
+import { Post } from "@/types";
+import Container from "@/components/Container";
+import { FaFacebookF, FaGithub, FaInstagram, FaLinkedin, FaYoutube } from "react-icons/fa";
+import { RichText } from "@/components/RichText";
+import {PortableText} from '@portabletext/react'
 
 
-const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
+interface Props {
+  params: {
+    slug: string;
+  };
+}
 
-const options = { next: { revalidate: 30 } };
+export const revalidate = 30;
 
+export const generateStaticParams = async () => {
+  const query = groq`*[_type == 'post']{
+        slug
+    }`;
+  const slugs: Post[] = await client.fetch(query);
+  const slugRoutes = slugs.map((slug) => slug?.slug?.current);
+  return slugRoutes?.map((slug) => ({
+    slug,
+  }));
+};
 
+const SlugPage = async ({ params: { slug } }: Props) => {
+  const query = groq`*[_type == 'post' && slug.current == $slug][0]{
+        ...,
+        body,
+        author->
+    }`;
+  const post: Post = await client.fetch(query, { slug });
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>; // Awaitable params object
-}) {
-  const { slug } =  await params; // Await the params object
-
-  const post = await client.fetch(POST_QUERY, { slug }, options);
-
-  if (!post) {
-    return <p>Post not found.</p>;
-  }
-
-  const postImageUrl = post.mainImage
-    ? urlFor(post.mainImage).width(550).height(310).url()
-    : null;
   
   
 
   return (
-    <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
-      <Link href="/" className="hover:underline">
-        ← Back to posts
-      </Link>
-      {postImageUrl && (
+    <Container className="mb-10">
+      <div className="flex items-center mb-10">
+        {post?.mainImage &&<div className="w-full md:w-2/3 m-5">
         <Image
-          src={postImageUrl}
-          alt={post.mainImage.alt || post.title}
-          className="aspect-video rounded-xl"
-          width={550}
-          height={310}
-        />
-      )}
-      
-      <h1 className="text-4xl font-bold mb-8">{post.title}</h1>
-      <div className="prose">
-        <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p>
-        {Array.isArray(post.body) && <PortableText value={post.body} />}
+            src={urlFor(post?.mainImage).url()}
+            width={500}
+            height={500}
+            alt="main image"
+            className="object-cover w-full h-72"
+          />
+        </div>}
+        <div className="w-1/3 hidden md:inline-flex flex-col items-center gap-5">
+           <Image
+            src={urlFor(post?.author?.image).url()}
+            width={200}
+            height={200}
+            alt="author image"
+            className="w-32 h-32 rounded-full object-cover"
+          />
+          <p className="text-3xl text-[#5442ae] font-semibold">
+            {post?.author?.name}
+          </p>
+          <p className="text-center tracking-wide text-sm">
+            {post?.author?.description}
+          </p>
+          <div className="flex items-center gap-3">
+            <Link
+              href={"https://www.youtube.com/channel/UChkOsij0dhgft0GhHRauOAA"}
+              target="blank"
+              className="w-10 h-10 bg-red-600 text-white text-xl rounded-full flex items-center justify-center hover:bg-[#5442ae] duration-200"
+            >
+              <FaYoutube />
+            </Link>
+            <Link
+              href={"https://www.youtube.com/channel/UChkOsij0dhgft0GhHRauOAA"}
+              target="blank"
+              className="w-10 h-10 bg-gray-500 text-white text-xl rounded-full flex items-center justify-center hover:bg-[#5442ae] duration-200"
+            >
+              <FaGithub />
+            </Link>
+            <Link
+              href={"https://www.youtube.com/channel/UChkOsij0dhgft0GhHRauOAA"}
+              target="blank"
+              className="w-10 h-10 bg-[#3e5b98] text-white text-xl rounded-full flex items-center justify-center hover:bg-[#5442ae] duration-200"
+            >
+              <FaFacebookF />
+            </Link>
+            <Link
+              href={"https://www.youtube.com/channel/UChkOsij0dhgft0GhHRauOAA"}
+              target="blank"
+              className="w-10 h-10 bg-[#bc1888] text-white text-xl rounded-full flex items-center justify-center hover:bg-[#5442ae] duration-200"
+            >
+              <FaInstagram />
+            </Link>
+            <Link
+              href={"https://www.youtube.com/channel/UChkOsij0dhgft0GhHRauOAA"}
+              target="blank"
+              className="w-10 h-10 bg-blue-500 text-white text-xl rounded-full flex items-center justify-center hover:bg-[#5442ae] duration-200"
+            >
+              <FaLinkedin />
+            </Link>
+          </div>
+        </div>
       </div>
-    </main>
+      <div className="m-5">
+        <PortableText value={post?.body} components={RichText} />
+      </div>
+    </Container>
   );
-}
+};
+
+export default SlugPage;
