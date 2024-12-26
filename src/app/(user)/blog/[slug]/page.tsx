@@ -11,9 +11,9 @@ import {PortableText} from '@portabletext/react'
 
 
 interface Props {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export const revalidate = 30;
