@@ -29,7 +29,9 @@ export const generateStaticParams = async () => {
   }));
 };
 
-const SlugPage = async ({ params: { slug } }: Props) => {
+const SlugPage = async ({ params }: Props) => {
+  const { slug } = await params;
+
   const query = groq`*[_type == 'post' && slug.current == $slug][0]{
         ...,
         body,
